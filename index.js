@@ -4,20 +4,16 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 (async () => {
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
 
   const login = async () => {
-    await page.waitForSelector(".selectList");
+    await page.waitForSelector("button[type=submit]");
     await page.click(".selectList");
-    await page.waitForSelector(`[data-lowervalue="${process.env.GAME_NAME}"]`);
     await page.click(`[data-lowervalue="${process.env.GAME_NAME}"]`);
-    await page.waitForSelector("#UserData_UserName");
     await page.click("#UserData_UserName");
     await page.type("#UserData_UserName", process.env.LOGIN_NAME);
-    await page.waitForSelector("#UserData_Password");
     await page.type("#UserData_Password", process.env.PASSWORD);
-    await page.waitForSelector("button[type=submit]");
     await page.click("button[type=submit]");
   };
 
