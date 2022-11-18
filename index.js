@@ -48,7 +48,23 @@ dotenv.config();
     await page.goBack();
   }
 
+  //TODO: implement market share into net profit object of comapny
+  /*   await page.waitForSelector('a[href$="default.aspx?id=4000"]');
+  await page.click('a[href$="default.aspx?id=4000"]');
+  await page.waitForSelector('a[href$="default.aspx?id=4006"]');
+  await page.click('a[href$="default.aspx?id=4006"]');
+
+  const marketSharesInnerHTML = await page.evaluate(() => {
+    return document.body.innerHTML;
+  });
+  const MS$ = cheerio.load(marketSharesInnerHTML);
+  console.log(MS$("tbody").children().length);
+ */
   const pear = netProfits.find((company) => company.companyName == process.env.COMPANY_NAME);
+  if (!pear) {
+    console.error(`Company '${process.env.COMPANY_NAME}' not found.`);
+    return;
+  }
   const higherNetProfitCompanies = netProfits.filter((company) => company.netProfit > pear.netProfit).sort((a, b) => b.netProfit - a.netProfit);
   const lowerNetProfitCompanies = netProfits.filter((company) => company.netProfit < pear.netProfit).sort((a, b) => b.netProfit - a.netProfit);
   console.log("===Stock Exchange===");
@@ -83,6 +99,71 @@ dotenv.config();
     return document.body.innerHTML;
   });
   const P$ = cheerio.load(purchasingInnerHTML);
+
+  const suppliersDefaults = [
+    {
+      name: "HongKong Ltd.",
+      prices: [
+        { name: "Desktops", price: 110 },
+        { name: "Palmtop", price: 115 },
+        { name: "Laptop", price: 100 },
+        { name: "Gamecomputer", price: 122 },
+      ],
+    },
+    {
+      name: " Henderson Ltd.",
+      prices: [
+        { name: "Desktops", price: 130 },
+        { name: "Palmtop", price: 135 },
+        { name: "Laptop", price: 125 },
+        { name: "Gamecomputer", price: 130 },
+      ],
+    },
+    {
+      name: "Schneider GmbH ",
+      prices: [
+        { name: "Desktops", price: 140 },
+        { name: "Palmtop", price: 145 },
+        { name: "Laptop", price: 130 },
+        { name: "Gamecomputer", price: 140 },
+      ],
+    },
+    {
+      name: "Kansas Inc.",
+      prices: [
+        { name: "Desktops", price: 120 },
+        { name: "Palmtop", price: 125 },
+        { name: "Laptop", price: 115 },
+        { name: "Gamecomputer", price: 128 },
+      ],
+    },
+    {
+      name: "Prodovski S.A.",
+      prices: [
+        { name: "Desktops", price: 100 },
+        { name: "Palmtop", price: 105 },
+        { name: "Laptop", price: 80 },
+        { name: "Gamecomputer", price: 120 },
+      ],
+    },
+  ];
+
+  products.forEach((product, index) => {
+    const amountToBuy = P$(`#ctl00_ctl04_ctl00_buyproductamount_${index + 1}`)[0].attribs.value;
+    const supplier = P$(`#ctl00_ctl04_ctl00_buyproductquality_${index + 1}`)[0].children;
+    supplier.forEach((supplier) => {
+      if (supplier.attribs) {
+        if (supplier.attribs.selected) {
+          product.supplier = supplier.children[0].data;
+        }
+      }
+    });
+    product.amountToBuy = parseInt(amountToBuy);
+    product.newStockAfterPeriod = product.stock + product.amountToBuy;
+    product.supplierPrice = suppliersDefaults.find((supplier) => supplier.name == product.supplier).prices.find((price) => price.name == product.name).price;
+    product.transportCost = 14;
+    product.margin = product.price - product.supplierPrice - product.transportCost;
+  });
 
   console.log(products);
   setTimeout(async () => {
